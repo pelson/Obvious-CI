@@ -1,0 +1,16 @@
+package:
+    name: obvious-ci
+    version: "master"
+
+source:
+    path: ../
+
+requirements:
+    build:
+        - python
+        - setuptools
+
+    run:
+        - python
+        - setuptools
+

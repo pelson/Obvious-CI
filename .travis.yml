@@ -1,0 +1,29 @@
+# The language in this case has no bearing - we are going to be making use of "conda" for a
+# python distribution for the scientific python stack.
+language: c
+
+env:
+    global:
+        - MINICONDA_VERSION="3.5.5"
+        - TARGET_ARCH="x64"
+        - CONDA_INSTALL_LOCN="${HOME}/conda"
+        # Defines BINSTAR_TOKEN (for pelson)
+        - secure: "NlB/4DcLa/aj4SssKXxW/XLz/6Eg8UWYNixHnvSd4l5TbrX+yJjlxRuaOo5DEVCP/qBvg1m0lPtGjZ4frmqTRkhPO59JDC8ICjjykTXbN07pgpogKkWdk2XrXVUsWvo17+SZISCNZc6QBtk5iLfzjZgDZu+yDrs3BCv11Byuiao=" 
+    matrix:
+        - CONDA_PY=27  CONDA_NPY=17
+
+install:
+    - source obvci_install_miniconda.sh
+    - obvci_install_conda_build_tools.py
+    - # TODO: Make it easy to add channels and setup URL printing in conda.
+    - # TODO: Install numpy and python according to the env variables.
+    - # TODO: Inject version (dev) and release into conda meta.yaml
+    - conda create -n installed_python python=2.7 --yes && source activate installed_python
+script:
+    - conda build obvious-ci.conda
+
+after_success:
+    - # Upload to binstar.
+    - binstar -t ${BINSTAR_TOKEN} $(conda build obvious-ci.conda --output) -u pelson -c development
+    - # TODO: Tidy up old dev releases (keep ~10?)
+
