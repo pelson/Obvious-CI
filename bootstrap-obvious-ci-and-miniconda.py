@@ -12,6 +12,7 @@ import argparse
 import os
 import platform
 import subprocess
+import sys
 
 try:
     from urllib.request import urlretrieve
@@ -69,9 +70,10 @@ def miniconda_url(target_system, target_arch, major_py_version, miniconda_versio
         raise ValueError('Unexpected target arch.')
     
     system_to_miniconda_os = {'Linux': 'Linux',
-                              'Darwin': 'MacOSX'}
+                              'Darwin': 'MacOSX',
+			      'Windows': 'Windows'}
     if target_system not in system_to_miniconda_os:
-        raise ValueError('Unexpected system {!r}.'.format(system))
+        raise ValueError('Unexpected system {!r}.'.format(target_system))
     template_values['OS'] = system_to_miniconda_os[target_system]
 
     miniconda_os_ext = {'Linux': 'sh', 'MacOSX': 'sh',
@@ -88,28 +90,34 @@ def miniconda_url(target_system, target_arch, major_py_version, miniconda_versio
 def main(target_dir, target_arch, major_py_version, miniconda_version='3.7.0', install_obvci=True):
     system = platform.system()
     URL = miniconda_url(system, target_arch, major_py_version, miniconda_version)
+    basename = URL.rsplit('/', 1)[1]
     if system in ['Linux', 'Darwin']:
-        script_fname = 'install_miniconda.sh'
-        cmd = ['bash', script_fname, '-b', '-p', target_dir]
+        cmd = ['bash', basename, '-b', '-p', target_dir]
+        bin_dir = 'bin'
     elif system in ['Windows']:
-        script_fname = 'install_miniconda.exe'
-        # needs to be put on the powershell
-#         $args = "/InstallationType=AllUsers /S /AddToPath=1 /RegisterPython=1 /D=" + $python_home
-#         Write-Host $filepath $args
-#         Start-Process -FilePath $filepath -ArgumentList $args -Wait -Passthru
+        cmd = ['powershell', 'Start-Process', '-FilePath', basename, '-ArgumentList',
+               '/S,/D=' + target_dir,
+	       '-Wait', ]#'-Passthru']
+        bin_dir = 'scripts'
     else:
         raise ValueError('Unsupported operating system.')
     
-    print('Downloading from {}'.format(URL))
-    urlretrieve(URL, script_fname)
-    
+    if not os.path.exists(basename):
+        print('Downloading from {}'.format(URL))
+        urlretrieve(URL, basename)
+    else:
+        print('Using cached version of {}'.format(URL))
+
+    # Install with powershell.
+    if os.path.exists(target_dir):
+        raise IOError('Installation directory already exists')
     subprocess.check_call(cmd)
     
     if not os.path.isdir(target_dir):
         raise RuntimeError('Failed to install miniconda :(')
 
     if install_obvci:
-        conda_path = os.path.join(target_dir, 'bin', 'conda')
+        conda_path = os.path.join(target_dir, bin_dir, 'conda')
         subprocess.check_call([conda_path, 'install', '--yes', '--quiet', '-c', 'pelson', 'obvious-ci'])
 
 

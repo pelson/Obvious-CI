@@ -1,3 +1,7 @@
+:: EXPECTED ENV VARS: TARGET_ARCH (either x86 or x64)
+::                    CONDA_PY (either 27, 33 etc. - only major version is extracted)
+::
+::
 :: To build extensions for 64 bit Python 3, we need to configure environment
 :: variables to use the MSVC 2010 C++ compilers from GRMSDKX_EN_DVD.iso of:
 :: MS Windows SDK for Windows 7 and .NET Framework 4 (SDK v7.1)
@@ -24,7 +28,7 @@ SET COMMAND_TO_RUN=%*
 SET WIN_SDK_ROOT="C:\Program Files\Microsoft SDKs\Windows"
 SET VISUAL_STUDIO_ROOT="C:\Program Files (x86)\Microsoft Visual Studio"
 
-SET MAJOR_PYTHON_VERSION="%PYTHON_VERSION:~0,1%"
+SET MAJOR_PYTHON_VERSION="%CONDA_PY:~0,1%"
 IF %MAJOR_PYTHON_VERSION% == "2" (
     SET WINDOWS_SDK_VERSION="v7.0"
     SET VISUAL_STUDIO_VERSION="9.0"
@@ -36,7 +40,7 @@ IF %MAJOR_PYTHON_VERSION% == "2" (
     EXIT 1
 )
 
-IF "%PYTHON_ARCH%"=="x64" (
+IF "%TARGET_ARCH%"=="x64" (
     ECHO Configuring Windows SDK %WINDOWS_SDK_VERSION% for Python %MAJOR_PYTHON_VERSION% on a 64 bit architecture
     SET DISTUTILS_USE_SDK=1
     SET MSSdk=1

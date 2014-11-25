@@ -1,0 +1,42 @@
+environment:
+  MINICONDA_VERSION: "3.5.5"
+  CONDA_INSTALL_LOCN: "C:\\conda"
+  CMD_IN_ENV: "cmd /E:ON /V:ON /C scripts\\obvci_appveyor_python_build_env.cmd"
+
+  BINSTAR_TOKEN:
+    secure: rCl3tR9qKVjNlG9MVyY2E6ZZsj6Wrhwe5ytWWXtbUaJWpIiLkY6ItyJkAyEpNJCO 
+
+  matrix:
+    - TARGET_ARCH: "x64"
+      CONDA_PY: "27"
+    - TARGET_ARCH: "x86"
+      CONDA_PY: "27"
+    - TARGET_ARCH: "x64"
+      CONDA_PY: "34"
+    - TARGET_ARCH: "x86"
+      CONDA_PY: "34"
+
+# We always use a 64-bit machine, but can build x86 distributions
+# with the TARGET_ARCH variable.
+platform:
+    - x64
+
+install:
+    - "python bootstrap-obvious-ci-and-miniconda.py %CONDA_INSTALL_LOCN% %TARGET_ARCH% %CONDA_PY:~0,1% --without-obvci"
+    - "SET PATH=%CONDA_INSTALL_LOCN%;%CONDA_INSTALL_LOCN%\\Scripts;%PATH%"
+  
+    - "python scripts\\obvci_install_conda_build_tools.py"
+    - "conda info"
+
+# Skip .NET project specific build phase.
+build: off
+
+test_script:
+    - "%CMD_IN_ENV% conda build obvious-ci.conda"
+
+on_success:
+    - "conda build obvious-ci.conda --output > obvci_fname.txt"
+    - "set /p FNAME= < obvci_fname.txt"
+    - "binstar -t %BINSTAR_TOKEN% upload %FNAME% -u pelson -c development --force"
+
+

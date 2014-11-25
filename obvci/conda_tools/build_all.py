@@ -137,7 +137,7 @@ def main():
                '\n\t'.join(resolved_dependencies)))
     for package in resolved_dependencies:
         print('\n'.join(['-' * 80] * 4))
-        print 'Building {} from {}'.format(package, conda_recipes_root)
+        print('Building {} from {}'.format(package, conda_recipes_root))
         print('\n'.join(['-' * 80] * 4))
         if not package_exists_on_binstar(package):
             build_package(package, root=conda_recipes_root)
