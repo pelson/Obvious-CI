@@ -1,6 +1,6 @@
 package:
     name: obvious-ci
-    version: "master"
+    version: '0.1.dev'
 
 source:
     path: ../
