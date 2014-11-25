@@ -13,8 +13,11 @@ env:
         - CONDA_PY=27  CONDA_NPY=17
 
 install:
-    - source obvci_install_miniconda.sh
-    - obvci_install_conda_build_tools.py
+    - python ./bootstrap-obvious-ci-and-miniconda.py ${CONDA_INSTALL_LOCN} ${TARGET_ARCH} ${CONDA_PY::1} --without-obvci
+    - # Get from tree: https://github.com/matplotlib/matplotlib/tree/v1.4.2/lib
+    - #source scripts/obvci_install_miniconda.sh
+    - source ${CONDA_INSTALL_LOCN}/bin/activate root
+    - scripts/obvci_install_conda_build_tools.py
     - # TODO: Make it easy to add channels and setup URL printing in conda.
     - # TODO: Install numpy and python according to the env variables.
     - # TODO: Inject version (dev) and release into conda meta.yaml
@@ -26,4 +29,4 @@ after_success:
     - # Upload to binstar.
     - binstar -t ${BINSTAR_TOKEN} $(conda build obvious-ci.conda --output) -u pelson -c development
     - # TODO: Tidy up old dev releases (keep ~10?)
-
+    - # Push the bootstrap file to the bootstrap branch (with version number?)
