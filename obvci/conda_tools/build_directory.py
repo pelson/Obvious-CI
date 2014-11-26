@@ -13,32 +13,31 @@ import sys
 
 from binstar_client.utils import get_binstar
 import binstar_client
+from conda_build.metadata import MetaData
+from conda_build.build import bldpkg_path
+import conda.config
 
-import build_all
+from . import build_all
 
 
 def package_built_name(package, root_dir):
-    return subprocess.check_output(['conda', 'build', package, '--output'],
-                                   cwd=root_dir).strip()
+    package_dir = os.path.join(root_dir, package)
+    meta = MetaData(package_dir)
+    return bldpkg_path(meta)
 
 
-def package_upload_name(package, root_dir):
-    package_fname = package_built_name(package, root_dir)
-
-    base_package_fname = os.path.basename(package_fname)
-    package_os = os.path.basename(os.path.dirname(package_fname))
-    upload_name = '{}/{}'.format(package_os, base_package_fname)
-    return upload_name
-
-
-def channel_distributions(user, channel, binstar_cli=None):
-    """
-    Return a list of the distributions in the given user's
-    (or organisation's) channel.
-
-    """
-    if binstar_cli is None:
-        binstar_cli = get_binstar()
+def distribution_exists(binstar_cli, owner, recipe_dir):
+    meta = MetaData(recipe_dir)
+    info = meta.info_index()
+    
+    fname = '{}/{}.tar.bz2'.format(conda.config.subdir, meta.dist())
+    try:
+        binstar_cli.distribution(owner, meta.name(), meta.version(),
+                                 fname)
+        exists = True
+    except binstar_client.errors.NotFound:
+        exists = False
+    return exists
 
 
 class NamedDict(object):
@@ -62,81 +61,49 @@ def main(conda_recipes_root, upload_owner, upload_channel):
     # TODO: This could become more flexible by allowing a exclude.lst
     # file in the recipe?
     packages = [package for package in packages
-		if os.path.exists(os.path.join(package[1], build_script))]
+		        if os.path.exists(os.path.join(package[1], build_script))]
 
     package_dependencies = build_all.conda_package_dependencies(packages)
     resolved_dependencies = list(build_all.resolve_dependencies(package_dependencies))
     
     binstar_token = os.environ.get('BINSTAR_TOKEN', None)
-    if binstar_token is None:
+    can_upload = binstar_token is not None
+
+    if not can_upload:
         print('**Build will continue, but no uploads will take place.**')
         print('To automatically upload from this script, define the BINSTAR_TOKEN env variable.')
         print('This is done automatically on the travis-ci system once the PR has been merged.')
     
     binstar_cli = get_binstar(NamedDict(token=binstar_token, site=None))
+
+    # Check to see if the distribution that would be built already exists in any
+    # channel belonging to the target owner.
+    distributions_exist = [distribution_exists(binstar_cli, upload_owner, os.path.join(conda_recipes_root, package))
+                           for package in resolved_dependencies]
     
-    distributions_on_channel = [dist['basename'] for dist in
-                                binstar_cli.show_channel(upload_channel, upload_owner)['files']]
-    
-    channel_dependencies = [package_upload_name(package, conda_recipes_root) in distributions_on_channel
-                            for package in resolved_dependencies]
+    if can_upload:
+        distributions_on_channel = [dist['basename'] for dist in
+                                    binstar_cli.show_channel(upload_channel, upload_owner)['files']]
+
     print('Resolved dependencies, will be built in the following order: \n\t{}'.format(
                '\n\t'.join(['{} (will be built: {})'.format(package, not already_built)
-                            for package, already_built in zip(resolved_dependencies, channel_dependencies)])))
+                            for package, already_built in zip(resolved_dependencies, distributions_exist)])))
 
-    for package, already_on_channel in zip(resolved_dependencies, channel_dependencies):
+    for package, already_exists in zip(resolved_dependencies, distributions_exist):
         package_fname = package_built_name(package, conda_recipes_root)
 
-        if not already_on_channel:
-            # The file may already exist on binstar, in which case we just need to link it.
-            if file_exists_on_binstar(binstar_cli, upload_owner, package, conda_recipes_root):
-                print('BUILD NOT NEEDED (already on binstar on another channel belonging '
-                      'to {}): {}'.format(upload_owner, package_fname))
-                print('Linking existing package to the {} channel (not building again).'.format(upload_channel))
+        if already_exists:
+            if can_upload and package_fname not in distributions_on_channel:
+                # Simply link to the given channel if it isn't already showing this distribution.
+                print('Adding {} to {}'.format(package, upload_channel))
                 binstar_cli.add_channel(upload_channel, upload_owner, package, filename=package_fname)
-            else:
-                # TODO: Ensure that the channel is available to conda.
-                build_all.build_package(package, conda_recipes_root)
-                if binstar_token is not None:
-                    try:
-                        subprocess.check_call(['binstar', '-t', binstar_token, 'upload', '--no-progress',
-                                               '-u', upload_owner, '-c', upload_channel, package_fname],
-                                              cwd=conda_recipes_root)
-                    except:
-                        raise RuntimeError('EXCEPTION OCCURED. Exception hidden to prevent token leakage.')
-
-
-def file_exists_on_binstar(binstar_cli, owner, package, root_dir):
-    upload_name = package_upload_name(package, root_dir)
-
-    import binstar_client.errors
-    try:
-        package_info = binstar_cli.package(owner, package)
-    except binstar_client.errors.NotFound:
-        package_exists = False
-    else:
-        package_exists = True
-
-    if package_exists:
-        exists = False
-        for release in package_info['releases']:
-            if upload_name in release['distributions']:
-                exists = True
-                break
-    return exists
-
-
-if __name__ == '__main__':
-    import argparse
-
-    parser = argparse.ArgumentParser(description="""A script to build and upload all of the conda recipes in
-                                                    the specified directory.""")
-    parser.add_argument("recipe-dir", help="""The directory containing (multiple) conda recipes
-                                              (i.e. each sub-directory must contain a meta.yaml).""")
-    parser.add_argument("upload-user", help="""The target user on binstar where build distributions should go.
-                                               The BINSTAR_TOKEN environment variable must also be defined.""")
-    parser.add_argument("--channel", help="""The target channel on binstar where built distributions should go.""",
-                        default='main')
-    
-    args = parser.parse_args()
-    main(getattr(args, 'recipe-dir'), getattr(args, 'upload-user'), args.channel)
+        else:
+            build_all.build_package(package, conda_recipes_root)
+            if can_upload:
+                try:
+                    # TODO: Use binstar_cli.upload?
+                    subprocess.check_call(['binstar', '-t', binstar_token, 'upload', '--no-progress',
+                                           '-u', upload_owner, '-c', upload_channel, package_fname],
+                                          cwd=conda_recipes_root)
+                except:
+                    raise RuntimeError('EXCEPTION OCCURED. Exception hidden to prevent token leakage.')

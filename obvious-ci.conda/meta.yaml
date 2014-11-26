@@ -13,4 +13,6 @@ requirements:
     run:
         - python
         - setuptools
-
+        - binstar
+        - conda
+        - conda-build

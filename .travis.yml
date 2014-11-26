@@ -29,6 +29,6 @@ script:
 after_success:
     - # Upload to binstar.
     - source activate root
-    - binstar -t ${BINSTAR_TOKEN} upload $(conda build obvious-ci.conda --output) -u pelson -c development
+    - binstar -t ${BINSTAR_TOKEN} upload $(conda build obvious-ci.conda --output) -u pelson -c development --force
     - # TODO: Tidy up old dev releases (keep ~10?)
     - # Push the bootstrap file to the bootstrap branch (with version number?)

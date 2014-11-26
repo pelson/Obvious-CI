@@ -12,6 +12,8 @@ parser.add_argument("upload-user", help="""The target user on binstar where buil
                                            The BINSTAR_TOKEN environment variable must also be defined.""")
 parser.add_argument("--channel", help="""The target channel on binstar where built distributions should go.""",
                     default='main')
+parser.add_argument("--disable-upload", help="""Disable the uploading of built packages.""",
+                    action='store_true')
 
 args = parser.parse_args()
 main(getattr(args, 'recipe-dir'), getattr(args, 'upload-user'), args.channel)

@@ -19,44 +19,8 @@ try:
 except ImportError:
     from urllib import urlretrieve
 
-"""
-
-    $filepath = DownloadMiniconda $python_version $platform_suffix
-    Write-Host "Installing" $filepath "to" $python_home
-    $args = "/InstallationType=AllUsers /S /AddToPath=1 /RegisterPython=1 /D=" + $python_home
-    Write-Host $filepath $args
-    Start-Process -FilePath $filepath -ArgumentList $args -Wait -Passthru
-    #Start-Sleep -s 15
-    if (Test-Path $python_home) {
-        Write-Host "Miniconda $python_version ($architecture) installation complete"
-    } else {
-        Write-Host "Failed to install Python in $python_home"
-        Exit 1
-    }
-}
-
-function main () {
-    InstallMiniconda $env:MINICONDA_VERSION $env:TARGET_ARCH $env:CONDA_INSTALL_LOCN
-}
-
-main
-"""
-
-
-MINICONDA_URL = "http://repo.continuum.io/miniconda"
-
-
-
-
-
 MINICONDA_URL_TEMPLATE = ('http://repo.continuum.io/miniconda/Miniconda{major_py_version}-'
                           '{miniconda_version}-{OS}-{arch}.{ext}')
-
-
-
-# bash miniconda.sh -b -p ${CONDA_INSTALL_LOCN}
-# 
-# source ${CONDA_INSTALL_LOCN}/bin/activate root
 
 
 def miniconda_url(target_system, target_arch, major_py_version, miniconda_version='3.7.0'):
@@ -71,7 +35,7 @@ def miniconda_url(target_system, target_arch, major_py_version, miniconda_versio
     
     system_to_miniconda_os = {'Linux': 'Linux',
                               'Darwin': 'MacOSX',
-			      'Windows': 'Windows'}
+                              'Windows': 'Windows'}
     if target_system not in system_to_miniconda_os:
         raise ValueError('Unexpected system {!r}.'.format(target_system))
     template_values['OS'] = system_to_miniconda_os[target_system]
