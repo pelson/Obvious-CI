@@ -1,3 +1,7 @@
+branches:
+  only:
+    - master
+
 environment:
   MINICONDA_VERSION: "3.5.5"
   CONDA_INSTALL_LOCN: "C:\\conda"

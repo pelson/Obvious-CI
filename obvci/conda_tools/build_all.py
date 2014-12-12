@@ -91,7 +91,7 @@ def resolve_dependencies(package_dependencies):
 
 def build_package(package_name, root):
     # Note: dependencies need to be installed - this is not currently implemented.
-    return subprocess.check_call(['conda', 'build', package_name], cwd=root)
+    return subprocess.check_call(['conda', 'build', package_name, '--quiet', '--no-binstar-upload'], cwd=root)
 
 
 def package_exists_on_binstar(package, root_dir):
