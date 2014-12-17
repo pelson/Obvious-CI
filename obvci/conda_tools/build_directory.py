@@ -29,7 +29,7 @@ def package_built_name(package, root_dir):
 def distribution_exists(binstar_cli, owner, recipe_dir):
     meta = MetaData(recipe_dir)
     info = meta.info_index()
-    
+
     fname = '{}/{}.tar.bz2'.format(conda.config.subdir, meta.dist())
     try:
         binstar_cli.distribution(owner, meta.name(), meta.version(),
@@ -65,7 +65,7 @@ def main(conda_recipes_root, upload_owner, upload_channel):
 
     package_dependencies = build_all.conda_package_dependencies(packages)
     resolved_dependencies = list(build_all.resolve_dependencies(package_dependencies))
-    
+
     binstar_token = os.environ.get('BINSTAR_TOKEN', None)
     can_upload = binstar_token is not None
 
@@ -73,14 +73,14 @@ def main(conda_recipes_root, upload_owner, upload_channel):
         print('**Build will continue, but no uploads will take place.**')
         print('To automatically upload from this script, define the BINSTAR_TOKEN env variable.')
         print('This is done automatically on the travis-ci system once the PR has been merged.')
-    
+
     binstar_cli = get_binstar(NamedDict(token=binstar_token, site=None))
 
     # Check to see if the distribution that would be built already exists in any
     # channel belonging to the target owner.
     distributions_exist = [distribution_exists(binstar_cli, upload_owner, os.path.join(conda_recipes_root, package))
                            for package in resolved_dependencies]
-    
+
     if can_upload:
         distributions_on_channel = [dist['basename'] for dist in
                                     binstar_cli.show_channel(upload_channel, upload_owner)['files']]
