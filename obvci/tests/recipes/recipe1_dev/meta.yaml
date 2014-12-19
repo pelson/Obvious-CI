@@ -1,0 +1,9 @@
+package:
+    name: recipe1
+    version: 'determined_at_buildtime'
+
+requirements:
+    build:
+
+    run:
+

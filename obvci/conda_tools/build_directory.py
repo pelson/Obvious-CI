@@ -8,8 +8,7 @@ defined), and the next package will be processed.
 """
 import os
 import subprocess
-import sys
-
+from argparse import Namespace
 
 from binstar_client.utils import get_binstar
 import binstar_client
@@ -18,6 +17,8 @@ from conda_build.build import bldpkg_path
 import conda.config
 
 from . import build_all
+from . import build
+from . import inspect_binstar
 
 
 def package_built_name(package, root_dir):
@@ -26,27 +27,119 @@ def package_built_name(package, root_dir):
     return bldpkg_path(meta)
 
 
-def distribution_exists(binstar_cli, owner, recipe_dir):
-    meta = MetaData(recipe_dir)
-    info = meta.info_index()
-
-    fname = '{}/{}.tar.bz2'.format(conda.config.subdir, meta.dist())
+def distribution_exists(binstar_cli, owner, metadata):
+    fname = '{}/{}.tar.bz2'.format(conda.config.subdir, metadata.dist())
     try:
-        binstar_cli.distribution(owner, meta.name(), meta.version(),
-                                 fname)
+        r = binstar_cli.distribution(owner, metadata.name(), metadata.version(),
+                                     fname)
+        print(r)
         exists = True
     except binstar_client.errors.NotFound:
         exists = False
     return exists
 
 
-class NamedDict(object):
-    def __init__(self, **kwargs):
-        for k, v in kwargs.iteritems():
-            setattr(self, k, v)
+def recipes_to_build(binstar_cli, owner, channel, recipe_metas):
+    for meta in recipe_metas:
+        if not inspect_binstar.distribution_exists(binstar_cli, owner, meta):
+            yield meta
+
+
+def fetch_metas(directory):
+    """
+    Get the build metadata of all recipes in a directory.
+
+    The recipes will be sorted by the order of their directory name.
+
+    """
+    if os.name == 'nt':
+        build_script = 'bld.bat'
+    else:
+        build_script = 'build.sh'
+
+    packages = []
+    for package_name in sorted(os.listdir(directory)):
+        package_dir = os.path.join(directory, package_name)
+        meta_yaml = os.path.join(package_dir, 'meta.yaml') 
+
+        if os.path.isdir(package_dir) and os.path.exists(meta_yaml):
+            # Only include packages which have an appropriate build script.
+            # TODO: This could become more flexible by allowing a exclude.lst
+            # file in the recipe?
+            if os.path.exists(os.path.join(package_dir, build_script)):
+                packages.append(MetaData(package_dir))
+
+    return packages
+
+
+def sort_dependency_order(metas):
+    """Sort the metas into the order that they must be built."""
+    meta_named_deps = {}
+    for meta in metas:
+        meta_named_deps[meta.name()] = (meta.meta['requirements']['run'] +
+                                        meta.meta['requirements']['build'])
+    sorted_names = list(build_all.resolve_dependencies(meta_named_deps))
+    return sorted(metas, key=lambda meta: sorted_names.index(meta.name()))
+
+
+def build_and_upload_recipes(binstar_cli, metas, owner, channel):
+
+def main(conda_recipes_root, upload_owner, upload_channel):
+    """
+    Build a directory of conda recipes sequentially, if they don't already exist on the owner's binstar account.
+    If the build does exist on the binstar account, but isn't in the targeted channel, it will be added to upload_channel,
+    All built distributions will be uploaded to the owner's channel.
+
+    Note: Recipes may not compute their version/build# at build time.
+
+    """
+    recipe_metas = fetch_metas(conda_recipes_root)
+    recipe_metas = sort_dependency_order(recipe_metas)
+
+    binstar_token = os.environ.get('BINSTAR_TOKEN', None)
+    can_upload = binstar_token is not None
+
+    if not can_upload:
+        print('**Build will continue, but no uploads will take place.**')
+        print('To automatically upload from this script, define the BINSTAR_TOKEN env variable.')
+        print('This is done automatically on the travis-ci system once the PR has been merged.')
+    else:
+        print('conda build currently leaks all environment variables on windows, therefore the BINSTAR_TOKEN '
+              'is being reset. See https://github.com/conda/conda-build/pull/274 for progress.')
+        os.environ['BINSTAR_TOKEN'] = 'Hidden by Obvious-CI'
+
+    binstar_cli = get_binstar(Namespace(token=binstar_token, site=None))
+
+    # Figure out which distributions binstar.org already has.
+    existing_distributions = [meta for meta in recipe_metas
+                              if inspect_binstar.distribution_exists(binstar_cli, upload_owner, meta)]
+
+    for meta in recipe_metas:
+        if meta not in existing_distributions:
+            build.build(build)
+        if can_upload:
+            if inspect_binstar.distribution_exists_on_channel(binstar_cli, upload_owner, meta, channel=upload_channel):
+                # link a distribution.
+                msg = """
+                There is a bug with binstar which prevents us from linking the {} distribution to the {} channel.
+                Please link this distribution manually using the binstar.org interface and re-run this.
+                """.format(meta.name(), upload_channel).strip()
+                raise ValueError(msg)
+            else:
+                # Upload the distribution
+                build.upload(binstar_cli, meta, upload_owner, channels=[upload_channel])
+
 
 
 def main(conda_recipes_root, upload_owner, upload_channel):
+    """
+    Build a directory of conda recipes sequentially, if they don't already exist on the owner's binstar account.
+    If the build does exist on the binstar account, but isn't in the targeted channel, it will be added to upload_channel,
+    All built distributions will be uploaded to the owner's channel.
+
+    Note: Recipes may not compute their version/build# at build time.
+
+    """
     print('Looking for packages in {}'.format(conda_recipes_root))
     packages = sorted(build_all.conda_packages(conda_recipes_root))
 
@@ -78,7 +171,7 @@ def main(conda_recipes_root, upload_owner, upload_channel):
               'is being reset. See https://github.com/conda/conda-build/pull/274 for progress.')
         os.environ['BINSTAR_TOKEN'] = 'Hidden by Obvious-CI'
 
-    binstar_cli = get_binstar(NamedDict(token=binstar_token, site=None))
+    binstar_cli = get_binstar(Namespace(token=binstar_token, site=None))
 
     # Check to see if the distribution that would be built already exists in any
     # channel belonging to the target owner.

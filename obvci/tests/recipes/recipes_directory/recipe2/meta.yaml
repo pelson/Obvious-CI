@@ -1,0 +1,10 @@
+package:
+    name: recipe2
+    version: '2.2'
+
+requirements:
+    build:
+      - recipe1
+
+    run:
+      - recipe3
