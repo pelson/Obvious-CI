@@ -1,0 +1,9 @@
+package:
+    name: recipe1
+    version: '0.1.0'
+
+requirements:
+    build:
+
+    run:
+
