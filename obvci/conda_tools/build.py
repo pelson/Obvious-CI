@@ -11,6 +11,8 @@ from conda_build.build import bldpkg_path
 import binstar_client
 from binstar_client.utils.detect import detect_package_type, get_attrs
 
+from . import inspect_binstar
+
 
 def build(meta, test=True):
     """Build (and optionally test) a recipe directory."""
@@ -48,16 +50,16 @@ def upload(cli, meta, owner, channels=['main']):
         cli.add_release(owner, package_name, version, requirements=[], announce=None,
                         description='')
 
-    with open(fname, 'rb') as fd:
-        try:
-            cli.distribution(owner, package_name, version, file_attrs['basename'])
-        except binstar_client.NotFound:
-            # The file doesn't exist.
-            pass
-        else:
-            print('Distribution %s already exists ... removing' % (file_attrs['basename'],))
-            cli.remove_dist(owner, package_name, version, file_attrs['basename'])
+    try:
+        cli.distribution(owner, package_name, version, file_attrs['basename'])
+    except binstar_client.NotFound:
+        # The file doesn't exist.
+        pass
+    else:
+        print('Distribution %s already exists ... removing' % (file_attrs['basename'],))
+        cli.remove_dist(owner, package_name, version, file_attrs['basename'])
 
+    with open(fname, 'rb') as fd:
         print('\nUploading file %s/%s/%s/%s to %s...' % (owner, package_name, version, file_attrs['basename'], channels))
         upload_info = cli.upload(owner, package_name, version, file_attrs['basename'],
                                  fd, package_type, description='',
