@@ -76,8 +76,10 @@ def sort_dependency_order(metas):
     meta_named_deps = {}
     buildable = [meta.name() for meta in metas]
     for meta in metas:
-        all_deps = (meta.meta['requirements']['run'] +
-                    meta.meta['requirements']['build'])
+        all_deps = (meta.get_value('requirements/run', []) +
+                    meta.get_value('requirements/build', []))
+        # Remove version information from the name.
+        all_deps = [dep.split(' ', 1)[0] for dep in all_deps]
         meta_named_deps[meta.name()] = [dep for dep in all_deps if dep in buildable]
     sorted_names = list(order_deps.resolve_dependencies(meta_named_deps))
     return sorted(metas, key=lambda meta: sorted_names.index(meta.name()))

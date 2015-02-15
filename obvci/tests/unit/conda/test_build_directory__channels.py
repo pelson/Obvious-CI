@@ -17,7 +17,7 @@ from argparse import Namespace
 def clear_binstar(cli, owner):
     """
     Empty all distributions for a user.
-    
+
     The "rm -rf *" of the binstar world.
 
     """
@@ -37,24 +37,24 @@ RECIPE_DEV = os.path.join(RECIPES_ROOT, 'recipe1_dev')
 
 def test_distribution_exists():
     clear_binstar(CLIENT, OWNER)
- 
+
     # Build a recipe.
     meta = MetaData(RECIPE_DEV)
     meta = build(meta)
- 
+
     # Check distribution exists returns false when there is no distribution.
     assert_false(distribution_exists(CLIENT, OWNER, meta))
- 
+
     # upload the distribution 
     upload(CLIENT, meta, OWNER, channels=['testing'])
- 
+
     # Check the distribution exists. Notice there is no channel being supplied here.
     assert_true(distribution_exists(CLIENT, OWNER, meta))
- 
+
     # Check the distribution is on testing but not on main.
     assert_true(distribution_exists_on_channel(CLIENT, OWNER, meta, channel='testing'))
     assert_false(distribution_exists_on_channel(CLIENT, OWNER, meta, channel='main'))
- 
+
     add_distribution_to_channel(CLIENT, OWNER, meta, channel='main')
     # Check that the distribution has been added.
     assert_true(distribution_exists_on_channel(CLIENT, OWNER, meta, channel='main'))
@@ -73,7 +73,7 @@ def test_leaky_add_to_channel():
     meta_eariler = MetaData(os.path.join(RECIPES_DIR, 'recipe1'))
     meta_eariler = build(meta_eariler)
     upload(CLIENT, meta_eariler, OWNER, channels=['testing'])
-    
+
     add_distribution_to_channel(CLIENT, OWNER, meta_eariler, channel='main')
 
     assert_true(distribution_exists_on_channel(CLIENT, OWNER, meta_eariler, channel='main'))
@@ -96,14 +96,14 @@ def assert_metas_not_equal(result_metas, expected_metas):
 
 def test_recipes_to_build():
     clear_binstar(CLIENT, OWNER)
-  
+
     # Build a recipe.
     meta = build(MetaData(os.path.join(RECIPES_DIR, 'recipe1')))
     upload(CLIENT, meta, OWNER, channels=['testing'])
-  
+
     metas = fetch_metas(RECIPES_DIR)
     metas.sort(key=lambda meta: meta.name())
-  
+
     result = list(recipes_to_build(CLIENT, OWNER, channel='testing', recipe_metas=metas))
     # The ones we need to build are all but the first.
     assert_metas_equal(result, metas[1:])
@@ -116,6 +116,17 @@ def test_meta_sorting():
     assert_metas_equal(sort_dependency_order(unsorted_metas), [metas[0], metas[2], metas[1]])
     # Check that that is what was going on.
     assert_metas_not_equal(unsorted_metas, metas)
+
+
+def test_meta_sorting_version_strip():
+    m1 = MetaData.fromdict({'package':
+                                {'name': 'a'},
+                            'requirements':
+                                {'build': ['b > 1.2']}})
+    m2 = MetaData.fromdict({'package':
+                                {'name': 'b'}})
+    metas = sort_dependency_order([m1, m2])
+    assert_equal([meta.name() for meta in metas], ['b', 'a'])
 
 
 if __name__ == '__main__':

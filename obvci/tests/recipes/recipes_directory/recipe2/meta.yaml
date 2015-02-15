@@ -4,7 +4,7 @@ package:
 
 requirements:
     build:
-      - recipe1
+      - recipe1 >= 0.1.0
 
     run:
       - recipe3
