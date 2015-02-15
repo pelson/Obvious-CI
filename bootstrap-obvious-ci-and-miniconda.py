@@ -23,7 +23,7 @@ MINICONDA_URL_TEMPLATE = ('http://repo.continuum.io/miniconda/Miniconda{major_py
                           '{miniconda_version}-{OS}-{arch}.{ext}')
 
 
-def miniconda_url(target_system, target_arch, major_py_version, miniconda_version='3.7.0'):
+def miniconda_url(target_system, target_arch, major_py_version, miniconda_version='3.8.3'):
     template_values = {'miniconda_version': miniconda_version}
 
     if target_arch == 'x86':
