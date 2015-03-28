@@ -1,7 +1,8 @@
 #!/usr/bin/env python
 import argparse
 
-from obvci.conda_tools.build_directory import main
+
+DEFAULT_CLASS = 'obvci.conda_tools.build_directory.Builder'
 
 
 if __name__ == '__main__':
@@ -15,6 +16,15 @@ if __name__ == '__main__':
                         default='main')
     parser.add_argument("--disable-upload", help="""Disable the uploading of built packages.""",
                         action='store_true')
-    
+    parser.add_argument("--builder-class", help="""Fully resolved name of the builder class.""",
+                        default=DEFAULT_CLASS)
+
     args = parser.parse_args()
-    main(getattr(args, 'recipe-dir'), getattr(args, 'upload-user'), args.channel)
+
+    mod, name = getattr(args, 'builder_class').rsplit('.', 1)
+    module = __import__(mod)
+    for sub_mod in mod.split('.')[1:]:
+        module = getattr(module, sub_mod)
+    cls = getattr(module, name)
+
+    cls(getattr(args, 'recipe-dir'), getattr(args, 'upload-user'), args.channel).main()
