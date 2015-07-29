@@ -18,7 +18,7 @@ def resolve_dependencies(package_dependencies):
 
     # A maximum of 10000 iterations. Beyond that and there is probably a
     # problem.
-    for failsafe in xrange(10000):
+    for failsafe in range(10000):
         for package, deps in sorted(remaining_dependencies.copy().items()):
             if all(dependency in completed_packages for dependency in deps):
                 completed_packages.append(package)
