@@ -9,7 +9,7 @@ miniconda in the same directory as this script.
 
 """
 from __future__ import print_function
-BUILD_PACKAGES = ['conda-build', 'conda-server', 'jinja2', 'setuptools']
+BUILD_PACKAGES = ['conda-build', 'anaconda-client', 'jinja2', 'setuptools']
 
 
 if __name__ == '__main__':
