@@ -154,7 +154,7 @@ class Builder(object):
 
     def recipes_to_build(self, recipes):
         existing_distributions = self.calculate_existing_distributions(recipes)
-        return [recipe in existing_distributions for recipe in recipes]
+        return [recipe not in existing_distributions for recipe in recipes]
 
     def build(self, meta):
         print('Building ', meta.name())
@@ -163,8 +163,7 @@ class Builder(object):
     def main(self):
         recipe_metas = self.fetch_all_metas()
         recipes_to_build = self.recipes_to_build(recipe_metas)
-        for meta in recipe_metas:
-            build_dist = meta in recipes_to_build
+        for meta, build_dist in zip(recipe_metas, recipes_to_build):
             if build_dist:
                 self.build(meta)
             self.post_build(meta, build_occured=build_dist)
