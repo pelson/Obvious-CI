@@ -27,7 +27,6 @@ def distribution_exists_on_channel(binstar_cli, owner, metadata, channel='main')
 
     """
     fname = '{}/{}.tar.bz2'.format(conda.config.subdir, metadata.dist())
-    'main', 'Obvious-ci-tests'
     distributions_on_channel = [dist['basename'] for dist in
                                 binstar_cli.show_channel(owner=owner, channel=channel)['files']]
     return fname in distributions_on_channel
