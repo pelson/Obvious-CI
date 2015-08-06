@@ -44,6 +44,5 @@ on_success:
     - "conda build obvious-ci.conda --output > obvci_fname.txt"
     - "set /p FNAME= < obvci_fname.txt"
     - "set /p BINSTAR_TOKEN= < binstar_token.txt"
-    - "conda server -t %BINSTAR_TOKEN% upload %FNAME% -u pelson -c development --force"
-
+    - "anaconda -t %BINSTAR_TOKEN% upload %FNAME% -u pelson -c development --force"
 

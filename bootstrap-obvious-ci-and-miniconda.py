@@ -95,7 +95,7 @@ if __name__ == '__main__':
                         choices=['2', '3'])
     parser.add_argument('--without-obvci', help="Disable the installation of Obvious-ci.",
                         action='store_true')
-    parser.add_argument('--miniconda-version', default='3.7.0')
+    parser.add_argument('--miniconda-version', default='latest')
 
     args = parser.parse_args()
     main(args.installation_directory, args.arch, args.major_py_version,
