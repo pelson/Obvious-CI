@@ -115,6 +115,23 @@ class Builder(object):
 
         self.binstar_cli = get_binstar(Namespace(token=self.binstar_token, site=None))
 
+    @classmethod
+    def define_args(cls, parser):
+        parser.add_argument("recipe-dir",
+                            help="""The directory containing (multiple) conda recipes
+                                    (i.e. each sub-directory must contain a meta.yaml).""")
+        parser.add_argument("upload-user",
+                            help="""The target user on binstar where build distributions should go.
+                                    The BINSTAR_TOKEN environment variable must also be defined.""")
+        parser.add_argument("--channel", help="""The target channel on binstar where built distributions should go.""",
+                            default='main')
+
+    @classmethod
+    def handle_args(cls, parsed_args):
+        return cls(getattr(parsed_args, 'recipe-dir'),
+                   getattr(parsed_args, 'upload-user'),
+                   parsed_args.channel)
+
     def fetch_all_metas(self):
         """
         Return the conda recipe metas, in the order they should be built.
@@ -135,15 +152,19 @@ class Builder(object):
                                 for meta in recipe_metas])))
         return existing_distributions
 
+    def recipes_to_build(self, recipes):
+        existing_distributions = self.calculate_existing_distributions(recipes)
+        return [recipe in existing_distributions for recipe in recipes]
+
     def build(self, meta):
         print('Building ', meta.name())
         build.build(meta)
 
     def main(self):
         recipe_metas = self.fetch_all_metas()
-        existing_distributions = self.calculate_existing_distributions(recipe_metas)
+        recipes_to_build = self.recipes_to_build(recipe_metas)
         for meta in recipe_metas:
-            build_dist = meta not in existing_distributions
+            build_dist = meta in recipes_to_build
             if build_dist:
                 self.build(meta)
             self.post_build(meta, build_occured=build_dist)
