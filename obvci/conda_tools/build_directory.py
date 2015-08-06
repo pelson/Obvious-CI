@@ -8,12 +8,14 @@ defined), and the next package will be processed.
 """
 from __future__ import print_function
 
+import logging
 import os
 import subprocess
 from argparse import Namespace
 
 from binstar_client.utils import get_binstar
 import binstar_client
+from conda.api import get_index
 from conda_build.metadata import MetaData
 from conda_build.build import bldpkg_path
 import conda.config
@@ -21,6 +23,7 @@ import conda.config
 from . import order_deps
 from . import build
 from . import inspect_binstar
+from . import from_conda_manifest_core_vn_matrix as vn_matrix
 
 
 def package_built_name(package, root_dir):
@@ -87,6 +90,60 @@ def sort_dependency_order(metas):
     return sorted(metas, key=lambda meta: sorted_names.index(meta.name()))
 
 
+class BakedDistribution(object):
+    """
+    Represents a conda pacakge, with the appropriate special case
+    versions fixed (e.g. CONDA_PY, CONDA_NPY). Without this, a meta
+    changes as the conda_build.config.CONDA_NPY changes.
+
+    """
+    def __init__(self, meta, special_versions=()):
+        self.meta = meta
+        self.special_versions = special_versions
+
+    def __repr__(self):
+        return 'BakedDistribution({}, {})'.format(self.meta,
+                                                  self.special_versions)
+
+    def __str__(self):
+        return self.dist()
+
+    def vn_context(self):
+        return vn_matrix.setup_vn_mtx_case(self.special_versions)
+
+    def __getattr__(self, name):
+        with vn_matrix.setup_vn_mtx_case(self.special_versions):
+            result = getattr(self.meta, name)
+
+        # Wrap any callable such that it is called within the appropriate environment.
+        # callable exists in python 2.* and >=3.2
+        if callable(result):
+            orig_result = result
+            import functools
+            @functools.wraps(result)
+            def with_vn_mtx_setup(*args, **kwargs):
+                with vn_matrix.setup_vn_mtx_case(self.special_versions):
+                    return orig_result(*args, **kwargs)
+            result = with_vn_mtx_setup
+        return result
+
+    @classmethod
+    def compute_matrix(cls, meta, index=None, extra_conditions=None):
+        if index is None:
+            with vn_matrix.override_conda_logging('WARN'):
+                index = get_index()
+
+        cases = vn_matrix.special_case_version_matrix(meta, index)
+
+        if extra_conditions:
+            cases = list(vn_matrix.filter_cases(cases, index,
+                                                extra_conditions))
+        result = []
+        for case in cases:
+            result.append(cls(meta, case))
+        return result
+
+
 class Builder(object):
     def __init__(self, conda_recipes_root, upload_owner, upload_channel):
         """
@@ -125,12 +182,19 @@ class Builder(object):
                                     The BINSTAR_TOKEN environment variable must also be defined.""")
         parser.add_argument("--channel", help="""The target channel on binstar where built distributions should go.""",
                             default='main')
+        parser.add_argument("--build-condition", nargs='+',
+                            dest='extra_build_conditions',
+                            help="Extra conditions for computing the build matrix.",
+                            default=['python >=2']  # Thanks for the python 1.0 build Continuum...
+                            )
 
     @classmethod
     def handle_args(cls, parsed_args):
-        return cls(getattr(parsed_args, 'recipe-dir'),
-                   getattr(parsed_args, 'upload-user'),
-                   parsed_args.channel)
+        result = cls(getattr(parsed_args, 'recipe-dir'),
+                     getattr(parsed_args, 'upload-user'),
+                     parsed_args.channel)
+        result.extra_build_conditions = filter(None, parsed_args.extra_build_conditions)
+        return result
 
     def fetch_all_metas(self):
         """
@@ -148,7 +212,7 @@ class Builder(object):
                                   if inspect_binstar.distribution_exists(self.binstar_cli, self.upload_owner, meta)]
 
         print('Resolved dependencies, will be built in the following order: \n\t{}'.format(
-                   '\n\t'.join(['{} (will be built: {})'.format(meta.name(), meta not in existing_distributions)
+                   '\n\t'.join(['{} (will be built: {})'.format(meta.dist(), meta not in existing_distributions)
                                 for meta in recipe_metas])))
         return existing_distributions
 
@@ -157,13 +221,30 @@ class Builder(object):
         return [recipe not in existing_distributions for recipe in recipes]
 
     def build(self, meta):
-        print('Building ', meta.name())
-        build.build(meta)
+        print('Building ', meta.dist())
+        if isinstance(meta, BakedDistribution):
+            with meta.vn_context():
+                build.build(meta.meta)
+        else:
+            build.build(meta)
 
     def main(self):
         recipe_metas = self.fetch_all_metas()
-        recipes_to_build = self.recipes_to_build(recipe_metas)
-        for meta, build_dist in zip(recipe_metas, recipes_to_build):
+        index = get_index()
+
+        print('Resolving distributions from {} recipes... '.format(len(recipe_metas)))
+
+        all_distros = []
+        for meta in recipe_metas:
+            distros = BakedDistribution.compute_matrix(meta, index,
+                                                       getattr(self, 'extra_build_conditions', []))
+            all_distros.extend(distros)
+
+        print('Computed that there are {} distributions from the {} '
+              'recipes:'.format(len(all_distros), len(recipe_metas)))
+        recipes_to_build = self.recipes_to_build(all_distros)
+
+        for meta, build_dist in zip(all_distros, recipes_to_build):
             if build_dist:
                 self.build(meta)
             self.post_build(meta, build_occured=build_dist)
@@ -184,3 +265,4 @@ class Builder(object):
                 # Upload the distribution
                 print('Uploading {} to the {} channel.'.format(meta.name(), self.upload_channel))
                 build.upload(self.binstar_cli, meta, self.upload_owner, channels=[self.upload_channel])
+
