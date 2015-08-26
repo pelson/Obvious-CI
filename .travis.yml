@@ -2,6 +2,8 @@
 # python distribution for the scientific python stack.
 language: c
 
+sudo: false
+
 env:
     global:
         - TARGET_ARCH="x64"
@@ -13,7 +15,6 @@ env:
 
 install:
     - python ./bootstrap-obvious-ci-and-miniconda.py ${CONDA_INSTALL_LOCN} ${TARGET_ARCH} ${CONDA_PY::1} --without-obvci
-    - # Get from tree: https://github.com/matplotlib/matplotlib/tree/v1.4.2/lib
     - source ${CONDA_INSTALL_LOCN}/bin/activate root
     - scripts/obvci_install_conda_build_tools.py
     - # TODO: Make it easy to add channels and setup URL printing in conda.
@@ -28,6 +29,7 @@ script:
 after_success:
     - # Upload to binstar.
     - source activate root
+    - conda build obvious-ci.conda --output
     - if [[ ( "$TRAVIS_PULL_REQUEST" == 'false' ) && ( "$TRAVIS_BRANCH" == 'master' ) ]] ; then anaconda upload -t ${BINSTAR_TOKEN} upload $(conda build obvious-ci.conda --output) -u pelson -c development --force; fi
     - # TODO: Tidy up old dev releases (keep ~10?)
     - # Push the bootstrap file to the bootstrap branch (with version number?)
