@@ -29,7 +29,5 @@ script:
 after_success:
     - # Upload to binstar.
     - source activate root
-    - conda build obvious-ci.conda --output
-    - if [[ ( "$TRAVIS_PULL_REQUEST" == 'false' ) && ( "$TRAVIS_BRANCH" == 'master' ) ]] ; then anaconda upload -t ${BINSTAR_TOKEN} upload $(conda build obvious-ci.conda --output) -u pelson -c development --force; fi
-    - # TODO: Tidy up old dev releases (keep ~10?)
+    - if [[ ( "$TRAVIS_PULL_REQUEST" == 'false' ) && ( "$TRAVIS_BRANCH" == 'master' ) ]] ; then anaconda -t ${BINSTAR_TOKEN} upload $(conda build obvious-ci.conda --output) -u pelson -c development --force; fi
     - # Push the bootstrap file to the bootstrap branch (with version number?)
