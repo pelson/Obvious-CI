@@ -182,7 +182,7 @@ class Builder(object):
                                     The BINSTAR_TOKEN environment variable must also be defined.""")
         parser.add_argument("--channel", help="""The target channel on binstar where built distributions should go.""",
                             default='main')
-        parser.add_argument("--build-condition", nargs='+',
+        parser.add_argument("--build-condition", nargs='*',
                             dest='extra_build_conditions',
                             help="Extra conditions for computing the build matrix.",
                             default=['python >=2']  # Thanks for the python 1.0 build Continuum...
