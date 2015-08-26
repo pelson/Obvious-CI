@@ -1,6 +1,8 @@
+{% set data = load_setuptools()%}
+
 package:
     name: obvious-ci
-    version: '0.4.dev'
+    version: {{data.get('version')}}
 
 source:
     path: ../
