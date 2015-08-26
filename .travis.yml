@@ -11,23 +11,16 @@ env:
         # Defines BINSTAR_TOKEN (for pelson)
         - secure: "NlB/4DcLa/aj4SssKXxW/XLz/6Eg8UWYNixHnvSd4l5TbrX+yJjlxRuaOo5DEVCP/qBvg1m0lPtGjZ4frmqTRkhPO59JDC8ICjjykTXbN07pgpogKkWdk2XrXVUsWvo17+SZISCNZc6QBtk5iLfzjZgDZu+yDrs3BCv11Byuiao=" 
     matrix:
-        - CONDA_PY=27  CONDA_NPY=17
+        - CONDA_PY=27
+        - CONDA_PY=34
 
 install:
     - python ./bootstrap-obvious-ci-and-miniconda.py ${CONDA_INSTALL_LOCN} ${TARGET_ARCH} ${CONDA_PY::1} --without-obvci
     - source ${CONDA_INSTALL_LOCN}/bin/activate root
     - scripts/obvci_install_conda_build_tools.py
-    - # TODO: Make it easy to add channels and setup URL printing in conda.
-    - # TODO: Install numpy and python according to the env variables.
-    - conda create -n installed_python python=2.7 --yes && source activate installed_python
 
 script:
-    - # Update the conda recipe's meta.yaml with an appropriate version.
-    - scripts/obvci_substitute_conda_recipe_version.py obvious-ci.conda obvci/_version.py
     - conda build obvious-ci.conda
 
 after_success:
-    - # Upload to binstar.
-    - source activate root
     - if [[ ( "$TRAVIS_PULL_REQUEST" == 'false' ) && ( "$TRAVIS_BRANCH" == 'master' ) ]] ; then anaconda -t ${BINSTAR_TOKEN} upload $(conda build obvious-ci.conda --output) -u pelson -c development --force; fi
-    - # Push the bootstrap file to the bootstrap branch (with version number?)
