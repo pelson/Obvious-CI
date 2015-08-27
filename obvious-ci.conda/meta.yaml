@@ -15,6 +15,6 @@ requirements:
     run:
         - python
         - setuptools
-        - binstar
+        - anaconda-client
         - conda
         - conda-build
