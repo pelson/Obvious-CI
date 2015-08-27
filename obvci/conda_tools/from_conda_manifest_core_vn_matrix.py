@@ -143,6 +143,7 @@ def special_case_version_matrix(meta, index):
     with override_conda_logging(logging.WARN):
         if 'numpy' in requirement_specs:
             np_spec = requirement_specs.pop('numpy')
+            py_spec = requirement_specs.pop('python', None)
             for numpy_pkg in r.get_pkgs(np_spec):
                 np_vn = minor_vn(index[numpy_pkg.fn]['version'])
                 numpy_deps = index[numpy_pkg.fn]['depends']
@@ -150,7 +151,8 @@ def special_case_version_matrix(meta, index):
                               for spec in numpy_deps}
                 # This would be problematic if python wasn't a dep of numpy.
                 for python_pkg in r.get_pkgs(numpy_deps['python']):
-                    # XXX Get the python spec here too...?
+                    if py_spec and not py_spec.match(python_pkg.fn):
+                        continue
                     py_vn = minor_vn(index[python_pkg.fn]['version'])
                     case = (('python', py_vn),
                             ('numpy', np_vn),
@@ -192,27 +194,26 @@ def filter_cases(cases, index, extra_specs):
     Typically extra_specs comes from the environment specification.
 
     """
-    r = conda.resolve.Resolve(index)
-    additional_specs = []
-    for spec in extra_specs:
-        try:
-            # no stdout, stderror logging unless in "crazy" mode.
-            r.get_pkgs(conda.resolve.MatchSpec(conda.resolve.MatchSpec(spec).name))
-        except conda.resolve.NoPackagesFound:
-            pass
-        else:
-            additional_specs.append(spec)
+    """
+    cases might look like:
+
+            cases = ([('python', '2.7'), ('numpy', '1.8')],
+                 [('python', '2.7'), ('numpy', '1.9')],
+                 [('python', '3.5'), ('numpy', '1.8')],
+                 )
+
+    Typically extra_specs comes from the environment specification.
+
+    """
+    specs = [MatchSpec(spec) for spec in extra_specs]
+
     for case in cases:
-        specs = ['{} {}.*'.format(pkg, version) for pkg, version in case]
-        specs = additional_specs + ['{} {}.*'.format(pkg, version)
-                               for pkg, version in case]
-        try:
-            with override_conda_logging(logging.WARN):
-                r.solve(specs, max_only=False)
-        except SystemExit as err:
-            # Output the useful message along the lines of "the following
-            # packages conflict with each other".
-            stdout.debug(str(err) + '\n')
-        else:
+        cases_by_pkg_name = {name: '{}-{}.0-0.tar.bz2'.format(name, version)
+                  for name, version in case}
+        match = []
+        for spec in specs:
+            if spec.name in cases_by_pkg_name:
+                match.append(bool(spec.match(cases_by_pkg_name[spec.name])))
+        if all(match):
             yield case
 
