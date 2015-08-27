@@ -193,7 +193,7 @@ class Builder(object):
         result = cls(getattr(parsed_args, 'recipe-dir'),
                      getattr(parsed_args, 'upload-user'),
                      parsed_args.channel)
-        result.extra_build_conditions = filter(None, parsed_args.extra_build_conditions)
+        result.extra_build_conditions = list(filter(None, parsed_args.extra_build_conditions))
         return result
 
     def fetch_all_metas(self):
