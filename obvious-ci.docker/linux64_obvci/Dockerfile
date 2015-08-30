@@ -3,8 +3,10 @@ FROM centos:6
 MAINTAINER Phil Elson <pelson.pub@gmail.com>
 
 RUN yum install -y \
+                   autoconf \
                    bzip2 \
                    gcc-c++ \
+                   git \
                    make \
                    patch \
                    tar \ 
@@ -15,7 +17,6 @@ RUN wget https://repo.continuum.io/miniconda/Miniconda-latest-Linux-x86_64.sh --
     export PATH=/opt/conda/bin:$PATH && \
     conda config --set show_channel_urls True && \
     conda update --all --yes && conda clean -t -p
-
 
 RUN export PATH=/opt/conda/bin:$PATH && \
     conda install --yes -c pelson/channel/development obvious-ci && \
