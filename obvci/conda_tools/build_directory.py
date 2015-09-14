@@ -64,7 +64,7 @@ def fetch_metas(directory):
     packages = []
     for package_name in sorted(os.listdir(directory)):
         package_dir = os.path.join(directory, package_name)
-        meta_yaml = os.path.join(package_dir, 'meta.yaml') 
+        meta_yaml = os.path.join(package_dir, 'meta.yaml')
 
         if os.path.isdir(package_dir) and os.path.exists(meta_yaml):
             # Only include packages which have an appropriate build script.
@@ -115,7 +115,8 @@ class BakedDistribution(object):
         with vn_matrix.setup_vn_mtx_case(self.special_versions):
             result = getattr(self.meta, name)
 
-        # Wrap any callable such that it is called within the appropriate environment.
+        # Wrap any callable such that it is called within the appropriate
+        # environment.
         # callable exists in python 2.* and >=3.2
         if callable(result):
             orig_result = result
@@ -140,7 +141,11 @@ class BakedDistribution(object):
                                                 extra_conditions))
         result = []
         for case in cases:
-            result.append(cls(meta, case))
+            dist = cls(meta, case)
+            # Trigger the recipe to be re-read. This means that any version
+            # specific qualifiers will be set appropriately.
+            dist.parse_again()
+            result.append(dist)
         return result
 
 
@@ -150,8 +155,6 @@ class Builder(object):
         Build a directory of conda recipes sequentially, if they don't already exist on the owner's binstar account.
         If the build does exist on the binstar account, but isn't in the targeted channel, it will be added to upload_channel,
         All built distributions will be uploaded to the owner's channel.
-
-        Note: Recipes may not compute their version/build# at build time.
 
         """
         self.conda_recipes_root = conda_recipes_root
