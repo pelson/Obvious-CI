@@ -165,10 +165,6 @@ class Builder(object):
             print('**Build will continue, but no uploads will take place.**')
             print('To automatically upload from this script, define the BINSTAR_TOKEN env variable.')
             print('This is done automatically on the travis-ci system once the PR has been merged.')
-        else:
-            print('conda build currently leaks all environment variables on windows, therefore the BINSTAR_TOKEN '
-                  'is being reset. See https://github.com/conda/conda-build/pull/274 for progress.')
-            os.environ['BINSTAR_TOKEN'] = 'Hidden by Obvious-CI'
 
         self.binstar_cli = get_binstar(Namespace(token=self.binstar_token, site=None))
 
