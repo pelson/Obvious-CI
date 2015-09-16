@@ -18,3 +18,12 @@ requirements:
         - anaconda-client
         - conda
         - conda-build
+
+test:
+  imports:
+    - obvci
+    - obvci.conda_tools
+    - obvci.cli
+  commands:
+    - unset CONDA_NPY && obvci_conda_build_dir --help  # [not win]
+    - obvci_conda_build_dir --help  # [win]
