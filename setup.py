@@ -22,6 +22,11 @@ setup(name='Obvious-ci',
                ['obvci_install_conda_build_tools.py', 'obvci_install_miniconda.ps1',
                 'obvci_install_miniconda.sh', 'obvci_appveyor_python_build_env.cmd',
                 'obvci_conda_build_dir.py']],
-      packages=['obvci', 'obvci.conda_tools'],
+      packages=['obvci', 'obvci.conda_tools', 'obvci.cli'],
+      entry_points={
+          'console_scripts': [
+              'obvci_conda_build_dir = obvci.cli.conda_build_dir:main'
+          ]
+      },
      )
 

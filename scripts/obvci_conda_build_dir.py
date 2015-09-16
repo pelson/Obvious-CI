@@ -3,17 +3,13 @@
 A script to build and upload all of the conda recipes in
 the specified directory.
 
+This script is left around as legacy from before entry_points was used for managing executables.
+It will be removed at some point in the future.
+
 """
-import argparse
-import sys
-
-
-from obvci.conda_tools.build_directory import Builder
-
+import obvci.cli.conda_build_dir as bld_dir
+import warnings
 
 if __name__ == '__main__':
-    description = sys.modules[__name__].__doc__
-    parser = argparse.ArgumentParser(description=description)
-    Builder.define_args(parser)
-    args = parser.parse_args()
-    Builder.handle_args(args).main()
+    warnings.warn('obvci_conda_build_dir.py has been deprecated. Use obvci_conda_build_dir instead.')
+    bld_dir.main()
