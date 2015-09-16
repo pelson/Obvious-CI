@@ -42,10 +42,16 @@ SET WIN_SDK_ROOT=C:\Program Files\Microsoft SDKs\Windows
 :: Extract the major and minor versions, and allow for the minor version to be
 :: more than 9.  This requires the version number to have two dots in it.
 SET MAJOR_PYTHON_VERSION=%CONDA_PY:~0,1%
-IF "%PYTHON_VERSION:~3,1%" == "." (
-    SET MINOR_PYTHON_VERSION=%CONDA_PY:~2,1%
+
+IF "%CONDA_PY:~2,1%" == "" (
+    :: CONDA_PY style, such as 27, 34 etc.
+    SET MINOR_PYTHON_VERSION=%CONDA_PY:~1,1%
 ) ELSE (
-    SET MINOR_PYTHON_VERSION=%CONDA_PY:~2,2%
+    IF "%CONDA_PY:~3,1%" == "." (
+     SET MINOR_PYTHON_VERSION=%CONDA_PY:~2,1%
+    ) ELSE (
+     SET MINOR_PYTHON_VERSION=%CONDA_PY:~2,2%
+    )
 )
 
 :: Based on the Python version, determine what SDK version to use, and whether
@@ -63,7 +69,7 @@ IF %MAJOR_PYTHON_VERSION% == 2 (
         )
     ) ELSE (
         ECHO Unsupported Python version: "%MAJOR_PYTHON_VERSION%"
-        EXIT 1
+        EXIT /B 1
     )
 )
 
@@ -75,14 +81,14 @@ IF "%TARGET_ARCH%"=="x64" (
         "%WIN_SDK_ROOT%\%WINDOWS_SDK_VERSION%\Setup\WindowsSdkVer.exe" -q -version:%WINDOWS_SDK_VERSION%
         "%WIN_SDK_ROOT%\%WINDOWS_SDK_VERSION%\Bin\SetEnv.cmd" /x64 /release
         ECHO Executing: %COMMAND_TO_RUN%
-        call %COMMAND_TO_RUN% || EXIT 1
+        call %COMMAND_TO_RUN% || EXIT /B 1
     ) ELSE (
         ECHO Using default MSVC build environment for 64 bit architecture
         ECHO Executing: %COMMAND_TO_RUN%
-        call %COMMAND_TO_RUN% || EXIT 1
+        call %COMMAND_TO_RUN% || EXIT /B 1
     )
 ) ELSE (
     ECHO Using default MSVC build environment for 32 bit architecture
     ECHO Executing: %COMMAND_TO_RUN%
-    call %COMMAND_TO_RUN% || EXIT 1
+    call %COMMAND_TO_RUN% || EXIT /B 1
 )
