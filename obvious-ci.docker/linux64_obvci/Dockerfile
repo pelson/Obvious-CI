@@ -9,8 +9,9 @@ RUN yum install -y \
                    git \
                    make \
                    patch \
-                   tar \ 
-                   wget
+                   tar \
+                   wget \
+                   which
 
 RUN wget https://repo.continuum.io/miniconda/Miniconda-latest-Linux-x86_64.sh --no-verbose && \
     bash Miniconda-latest-Linux-x86_64.sh -b -p /opt/conda && rm Miniconda*.sh && \
