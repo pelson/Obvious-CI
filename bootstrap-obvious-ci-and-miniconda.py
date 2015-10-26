@@ -51,7 +51,7 @@ def miniconda_url(target_system, target_arch, major_py_version, miniconda_versio
     return MINICONDA_URL_TEMPLATE.format(**template_values)
 
 
-def main(target_dir, target_arch, major_py_version, miniconda_version='3.8.3', install_obvci=True):
+def main(target_dir, target_arch, major_py_version, miniconda_version='latest', install_obvci=True):
     system = platform.system()
     URL = miniconda_url(system, target_arch, major_py_version, miniconda_version)
     basename = URL.rsplit('/', 1)[1]
