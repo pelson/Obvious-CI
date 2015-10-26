@@ -119,19 +119,24 @@ def special_case_version_matrix(meta, index):
 
     """
     r = conda.resolve.Resolve(index)
-    requirements = meta.get_value('requirements/run', [])
+    requirements = meta.get_value('requirements/build', [])
     requirement_specs = {MatchSpec(spec).name: MatchSpec(spec)
                          for spec in requirements}
+    run_requirements = meta.get_value('requirements/run', [])
+    run_requirement_specs = {MatchSpec(spec).name: MatchSpec(spec)
+                             for spec in run_requirements}
+
 
     # Thanks to https://github.com/conda/conda-build/pull/493 we no longer need to
     # compute the complex matrix for numpy versions unless a specific version has
     # been defined.
     np_spec = requirement_specs.get('numpy')
-    if np_spec and np_spec.spec == 'numpy':
+    np_run_spec = run_requirement_specs.get('numpy')
+    if np_spec and np_run_spec and 'x.x' not in np_run_spec.spec:
         # A simple spec (just numpy) has been defined, so we can drop it from the
         # special cases.
         requirement_specs.pop('numpy')
-    
+
     for pkg in requirement_specs:
         spec = requirement_specs[pkg]
         # We want to bake the version in, but we don't know what it is yet.

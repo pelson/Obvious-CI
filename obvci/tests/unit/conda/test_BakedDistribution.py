@@ -56,7 +56,7 @@ class Test_baked_version(unittest.TestCase):
                 version: 2
             requirements:
                 build:
-                 - python
+                 - python >=2.7
                  - numpy
                 run:
                  - python x.x
@@ -71,6 +71,7 @@ class Test_baked_version(unittest.TestCase):
 
         index = {'python-2.7-0.tar.bz2': {'name': 'python', 'version': '2.7', 'build_number': 0}}
         self.index.add_pkg('python', '2.7.2')
+        self.index.add_pkg('python', '2.6.2')
         self.index.add_pkg('python', '3.5.0')
         self.index.add_pkg('numpy', '1.8.0', depends=['python'])
         r = BakedDistribution.compute_matrix(meta, self.index)
