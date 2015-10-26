@@ -119,7 +119,7 @@ def special_case_version_matrix(meta, index):
 
     """
     r = conda.resolve.Resolve(index)
-    requirements = meta.get_value('requirements/build', [])
+    requirements = meta.get_value('requirements/run', [])
     requirement_specs = {MatchSpec(spec).name: MatchSpec(spec)
                          for spec in requirements}
 
@@ -131,6 +131,12 @@ def special_case_version_matrix(meta, index):
         # A simple spec (just numpy) has been defined, so we can drop it from the
         # special cases.
         requirement_specs.pop('numpy')
+    
+    for pkg in requirement_specs:
+        spec = requirement_specs[pkg]
+        # We want to bake the version in, but we don't know what it is yet.
+        if spec.spec.endswith(' x.x'):
+            requirement_specs[pkg] = MatchSpec(spec.spec[:-4])
 
     def minor_vn(version_str):
         """
