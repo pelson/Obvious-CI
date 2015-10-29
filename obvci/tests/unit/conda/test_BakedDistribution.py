@@ -69,7 +69,6 @@ class Test_baked_version(unittest.TestCase):
 
         meta = MetaData(self.recipe_dir)
 
-        index = {'python-2.7-0.tar.bz2': {'name': 'python', 'version': '2.7', 'build_number': 0}}
         self.index.add_pkg('python', '2.7.2')
         self.index.add_pkg('python', '2.6.2')
         self.index.add_pkg('python', '3.5.0')
@@ -78,6 +77,33 @@ class Test_baked_version(unittest.TestCase):
         self.assertEqual(len(r), 2)
         self.assertEqual(r[0].build_id(), 'np18py27_0')
         self.assertEqual(r[1].build_id(), 'np18py35_0')
+
+    def test_py_xx_version(self):
+        recipe = """
+            package:
+                name: recipe_which_depends_on_py_version
+                version: 2
+            build:
+                skip: True  # [py3k]
+            requirements:
+                build:
+                    - python
+                run:
+                    - python
+            """
+        with open(os.path.join(self.recipe_dir, 'meta.yaml'), 'w') as fh:
+            fh.write(recipe)
+        conda_build.config.config.CONDA_PY = 35
+
+        meta = MetaData(self.recipe_dir)
+
+        self.index.add_pkg('python', '2.7.2')
+        self.index.add_pkg('python', '2.6.2')
+        self.index.add_pkg('python', '3.5.0')
+        r = BakedDistribution.compute_matrix(meta, self.index)
+        self.assertEqual(len(r), 2)
+        self.assertEqual(r[0].build_id(), 'py27_0')
+        self.assertEqual(r[1].build_id(), 'py26_0')
 
 
 if __name__ == '__main__':

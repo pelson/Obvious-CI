@@ -56,22 +56,13 @@ def fetch_metas(directory):
     The recipes will be sorted by the order of their directory name.
 
     """
-    if os.name == 'nt':
-        build_script = 'bld.bat'
-    else:
-        build_script = 'build.sh'
-
     packages = []
     for package_name in sorted(os.listdir(directory)):
         package_dir = os.path.join(directory, package_name)
         meta_yaml = os.path.join(package_dir, 'meta.yaml')
 
         if os.path.isdir(package_dir) and os.path.exists(meta_yaml):
-            # Only include packages which have an appropriate build script.
-            # TODO: This could become more flexible by allowing a exclude.lst
-            # file in the recipe?
-            if os.path.exists(os.path.join(package_dir, build_script)):
-                packages.append(MetaData(package_dir))
+            packages.append(MetaData(package_dir))
 
     return packages
 
@@ -145,7 +136,8 @@ class BakedDistribution(object):
             # Trigger the recipe to be re-read. This means that any version
             # specific qualifiers will be set appropriately.
             dist.parse_again()
-            result.append(dist)
+            if not dist.skip():
+                result.append(dist)
         return result
 
 
