@@ -1,0 +1,2 @@
+include versioneer.py
+include obvci/_version.py

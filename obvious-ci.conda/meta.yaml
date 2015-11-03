@@ -1,4 +1,4 @@
-{% set data = load_setuptools()%}
+{% set data = load_setuptools() %}
 
 package:
     name: obvious-ci
