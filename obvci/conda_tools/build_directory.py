@@ -135,12 +135,6 @@ class BakedDistribution(object):
         result = []
         for case in cases:
             dist = cls(meta, case)
-            # Trigger the recipe to be re-read. This means that any version
-            # specific qualifiers will be set appropriately.
-            with dist.vn_context():
-                dist.parse_again()
-            with dist.vn_context():
-                dist.parse_again()
             if not dist.skip():
                 result.append(dist)
         return result
