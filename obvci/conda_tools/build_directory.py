@@ -104,6 +104,7 @@ class BakedDistribution(object):
 
     def __getattr__(self, name):
         with vn_matrix.setup_vn_mtx_case(self.special_versions):
+            self.meta.parse_again()
             result = getattr(self.meta, name)
 
         # Wrap any callable such that it is called within the appropriate
@@ -115,6 +116,7 @@ class BakedDistribution(object):
             @functools.wraps(result)
             def with_vn_mtx_setup(*args, **kwargs):
                 with vn_matrix.setup_vn_mtx_case(self.special_versions):
+                    self.meta.parse_again()
                     return orig_result(*args, **kwargs)
             result = with_vn_mtx_setup
         return result
@@ -135,7 +137,10 @@ class BakedDistribution(object):
             dist = cls(meta, case)
             # Trigger the recipe to be re-read. This means that any version
             # specific qualifiers will be set appropriately.
-            dist.parse_again()
+            with dist.vn_context():
+                dist.parse_again()
+            with dist.vn_context():
+                dist.parse_again()
             if not dist.skip():
                 result.append(dist)
         return result
