@@ -30,15 +30,29 @@ class Test_conditional_recipe(unittest.TestCase):
             fh.write(recipe)
         conda_build.config.config.CONDA_PY = 27
         meta = MetaData(self.recipe_dir)
-        dist = BakedDistribution(meta, (('python', '27', ), ))
-        self.assertEqual(dist.version(), u'2')
+        dist1 = BakedDistribution(meta, (('python', '27', ), ))
+        self.assertEqual(dist1.version(), u'2')
 
-        dist = BakedDistribution(meta, (('python', '35', ), ))
-        self.assertEqual(dist.version(), u'2')
-        # When we trigger re-reading, ensure that the version is correctly
-        # reflected.
-        dist.parse_again()
-        self.assertEqual(dist.version(), u'3')
+        dist2 = BakedDistribution(meta, (('python', '35', ), ))
+        self.assertEqual(dist2.version(), u'3')
+        self.assertEqual(dist1.version(), u'2')
+
+    def test_py_version_selector_skip(self):
+        recipe = """
+            package:
+                name: recipe_which_depends_on_py_version
+            build:  # [py35]
+                skip: True  # [py3k]
+            """.replace('\n' + ' ' * 12, '\n').strip()
+        with open(os.path.join(self.recipe_dir, 'meta.yaml'), 'w') as fh:
+            fh.write(recipe)
+        conda_build.config.config.CONDA_PY = 27
+        meta = MetaData(self.recipe_dir)
+        dist1 = BakedDistribution(meta, (('python', '35', ), ))
+        dist2 = BakedDistribution(meta, (('python', '34', ), ))
+
+        self.assertEqual(dist1.skip(), True)
+        self.assertEqual(dist2.skip(), False)
 
 
 class Test_baked_version(unittest.TestCase):
