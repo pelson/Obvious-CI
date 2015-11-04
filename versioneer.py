@@ -478,7 +478,7 @@ def run_command(commands, args, cwd=None, verbose=False, hide_stderr=False):
             print("unable to run %s (error)" % dispcmd)
         return None
     return stdout
-LONG_VERSION_PY['git'] = '''
+LONG_VERSION_PY['git'] = r'''
 # This file helps to compute a version number in source trees obtained from
 # git-archive tarball (such as those provided by githubs download-from-tag
 # feature). Distribution tarballs (built by setup.py sdist) and build
@@ -723,7 +723,7 @@ def git_pieces_from_vcs(tag_prefix, root, verbose, run_command=run_command):
             # Pick the first branch that is returned. Good or bad.
             branch_name = branches[0]
 
-    branch_name = branch_name.replace(' ', '_').replace('(', '').replace(')', '')
+    branch_name = branch_name.replace(' ', '.').replace('(', '').replace(')', '')
 
     pieces['branch'] = branch_name
 
@@ -1192,7 +1192,7 @@ def git_pieces_from_vcs(tag_prefix, root, verbose, run_command=run_command):
             # Pick the first branch that is returned. Good or bad.
             branch_name = branches[0]
 
-    branch_name = branch_name.replace(' ', '_').replace('(', '').replace(')', '')
+    branch_name = branch_name.replace(' ', '.').replace('(', '').replace(')', '')
 
     pieces['branch'] = branch_name
 

@@ -1,3 +1,4 @@
+
 # This file helps to compute a version number in source trees obtained from
 # git-archive tarball (such as those provided by githubs download-from-tag
 # feature). Distribution tarballs (built by setup.py sdist) and build
@@ -232,8 +233,7 @@ def git_pieces_from_vcs(tag_prefix, root, verbose, run_command=run_command):
                               cwd=root).strip()
     if branch_name == 'HEAD':
         branches = run_command(GITS, ["branch", "--contains"],
-                               cwd=root).split('
-')
+                               cwd=root).split('\n')
         branches = [branch[2:] for branch in branches if branch[4:5] != '(']
         if 'master' in branches:
             branch_name = 'master'
@@ -243,7 +243,7 @@ def git_pieces_from_vcs(tag_prefix, root, verbose, run_command=run_command):
             # Pick the first branch that is returned. Good or bad.
             branch_name = branches[0]
 
-    branch_name = branch_name.replace(' ', '_').replace('(', '').replace(')', '')
+    branch_name = branch_name.replace(' ', '.').replace('(', '').replace(')', '')
 
     pieces['branch'] = branch_name
 
