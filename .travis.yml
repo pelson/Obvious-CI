@@ -11,8 +11,10 @@ env:
         # Defines BINSTAR_TOKEN (for pelson)
         - secure: "NlB/4DcLa/aj4SssKXxW/XLz/6Eg8UWYNixHnvSd4l5TbrX+yJjlxRuaOo5DEVCP/qBvg1m0lPtGjZ4frmqTRkhPO59JDC8ICjjykTXbN07pgpogKkWdk2XrXVUsWvo17+SZISCNZc6QBtk5iLfzjZgDZu+yDrs3BCv11Byuiao=" 
     matrix:
+        # These items are used by the miniconda installer, but also by the conda build phase.
         - CONDA_PY=27
         - CONDA_PY=34
+        - CONDA_PY=35
 
 install:
     - python ./bootstrap-obvious-ci-and-miniconda.py ${CONDA_INSTALL_LOCN} ${TARGET_ARCH} ${CONDA_PY::1} --without-obvci
