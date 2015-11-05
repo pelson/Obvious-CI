@@ -19,6 +19,10 @@ environment:
       CONDA_PY: "34"
     - TARGET_ARCH: "x86"
       CONDA_PY: "34"
+    - TARGET_ARCH: "x64"
+      CONDA_PY: "35"
+    - TARGET_ARCH: "x86"
+      CONDA_PY: "35"
 
 # We always use a 64-bit machine, but can build x86 distributions
 # with the TARGET_ARCH variable.
@@ -41,5 +45,9 @@ test_script:
 on_success:
     - "conda build obvious-ci.conda --output > obvci_fname.txt"
     - "set /p FNAME= < obvci_fname.txt"
-    - "anaconda -t %BINSTAR_TOKEN% upload %FNAME% -u pelson -c development --force"
+
+    - "python -c \"import os; tag = os.environ.get('APPVEYOR_REPO_TAG', 'false'); is_master = os.environ.get('APPVEYOR_REPO_BRANCH', None) == 'master'; is_pr = os.environ.get('APPVEYOR_PULL_REQUEST_NUMBER', ''); print(tag not in ['false', ''] or (is_master and not is_pr));\" > is_tag_or_master.txt"
+    - "set /p TAG_OR_MASTER= < is_tag_or_master.txt"
+    - "ECHO '%TAG_OR_MASTER%'"
+    - "if '%TAG_OR_MASTER%' == 'True' (anaconda -t %BINSTAR_TOKEN% upload %FNAME% -u pelson -c development --force)"
 
