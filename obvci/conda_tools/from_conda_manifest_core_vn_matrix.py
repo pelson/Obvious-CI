@@ -132,12 +132,12 @@ def special_case_version_matrix(meta, index):
 
     # Combine multi-line specs into a single line by assuming the requirements
     # should be and-ed.
-    for spec_name, spec_list in run_requirement_specs.iteritems():
+    for spec_name, spec_list in run_requirement_specs.items():
         run_requirement_specs[spec_name] = ','.join(spec_list)
 
     # Turn these into MatchSpecs.
     run_requirement_specs = {name: MatchSpec(spec)
-                             for name, spec in run_requirement_specs.iteritems()}
+                             for name, spec in run_requirement_specs.items()}
 
     # Thanks to https://github.com/conda/conda-build/pull/493 we no longer need to
     # compute the complex matrix for numpy versions unless a specific version has
