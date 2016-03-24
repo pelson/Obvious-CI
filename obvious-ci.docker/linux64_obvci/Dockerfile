@@ -11,7 +11,12 @@ RUN yum install -y \
                    patch \
                    tar \
                    wget \
-                   which
+                   which \
+                   libXext \
+                   libXrender \
+                   libSM \
+                   tk \
+                   libX11-devel
 
 RUN wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh --no-verbose && \
     bash Miniconda3-latest-Linux-x86_64.sh -b -p /opt/conda && rm Miniconda*.sh && \
