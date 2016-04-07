@@ -2,7 +2,8 @@ FROM centos:6
 
 MAINTAINER Phil Elson <pelson.pub@gmail.com>
 
-RUN yum install -y \
+RUN yum update -y && \
+    yum install -y \
                    bzip2 \
                    gcc-c++ \
                    git \
@@ -14,7 +15,8 @@ RUN yum install -y \
                    libXext \
                    libXrender \
                    libSM \
-                   libX11-devel
+                   libX11-devel && \
+    yum clean all
 
 RUN wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh --no-verbose && \
     bash Miniconda3-latest-Linux-x86_64.sh -b -p /opt/conda && rm Miniconda*.sh && \
