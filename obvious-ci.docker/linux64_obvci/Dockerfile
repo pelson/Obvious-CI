@@ -14,7 +14,6 @@ RUN echo "exclude=*.i386 *.i686" >> /etc/yum.conf && \
                    make \
                    patch \
                    tar \
-                   wget \
                    which \
                    libXext \
                    libXrender \
@@ -22,7 +21,7 @@ RUN echo "exclude=*.i386 *.i686" >> /etc/yum.conf && \
                    libX11-devel && \
     yum clean all
 
-RUN wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh --no-verbose && \
+RUN curl -s -O https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh && \
     bash Miniconda3-latest-Linux-x86_64.sh -b -p /opt/conda && rm Miniconda*.sh && \
     export PATH=/opt/conda/bin:$PATH && \
     conda config --set show_channel_urls True && \
