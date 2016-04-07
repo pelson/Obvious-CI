@@ -2,6 +2,9 @@ FROM centos:6
 
 MAINTAINER Phil Elson <pelson.pub@gmail.com>
 
+
+ENV LANG en_US.UTF-8
+
 RUN echo "exclude=*.i386 *.i686" >> /etc/yum.conf && \
     yum update -y && \
     yum install -y \
@@ -34,5 +37,3 @@ RUN export PATH=/opt/conda/bin:$PATH && \
 # RUN yum install -y expat-devel
 
 ENV PATH /opt/conda/bin:$PATH
-
-ENV LANG en_US.UTF-8
