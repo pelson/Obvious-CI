@@ -21,7 +21,12 @@ RUN echo "exclude=*.i386 *.i686" >> /etc/yum.conf && \
                    libX11-devel && \
     yum clean all
 
-RUN curl -s -O https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh && \
+RUN curl -s -L -O https://github.com/krallin/tini/releases/download/v0.9.0/tini && \
+    openssl md5 tini | grep 596b898785d2f169ec969445087c14d6 && \
+    chmod +x tini && \
+    mv tini /usr/local/bin
+
+RUN curl -s -L -O https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh && \
     bash Miniconda3-latest-Linux-x86_64.sh -b -p /opt/conda && rm Miniconda*.sh && \
     export PATH=/opt/conda/bin:$PATH && \
     conda config --set show_channel_urls True && \
@@ -36,3 +41,6 @@ RUN export PATH=/opt/conda/bin:$PATH && \
 # RUN yum install -y expat-devel
 
 ENV PATH /opt/conda/bin:$PATH
+
+ENTRYPOINT [ "/usr/local/bin/tini", "--" ]
+CMD [ "/bin/bash" ]
