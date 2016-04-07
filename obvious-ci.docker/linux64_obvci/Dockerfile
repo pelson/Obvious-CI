@@ -2,7 +2,8 @@ FROM centos:6
 
 MAINTAINER Phil Elson <pelson.pub@gmail.com>
 
-RUN yum update -y && \
+RUN echo "exclude=*.i386 *.i686" >> /etc/yum.conf && \
+    yum update -y && \
     yum install -y \
                    bzip2 \
                    gcc-c++ \
