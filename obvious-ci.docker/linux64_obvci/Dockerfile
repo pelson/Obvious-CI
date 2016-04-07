@@ -32,15 +32,14 @@ RUN curl -s -L -O https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x8
     conda config --set show_channel_urls True && \
     conda update --all --yes && conda clean -tipsy
 
-RUN export PATH=/opt/conda/bin:$PATH && \
-    conda install --yes -c pelson/channel/development obvious-ci && \
+ENV PATH /opt/conda/bin:$PATH
+
+RUN conda install --yes -c pelson/channel/development obvious-ci && \
     obvci_install_conda_build_tools.py
 
 # udunits2.
 # libtool texinfo
 # RUN yum install -y expat-devel
-
-ENV PATH /opt/conda/bin:$PATH
 
 ENTRYPOINT [ "/usr/local/bin/tini", "--" ]
 CMD [ "/bin/bash" ]
