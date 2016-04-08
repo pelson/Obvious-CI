@@ -6,9 +6,8 @@ MAINTAINER Phil Elson <pelson.pub@gmail.com>
 # Set an encoding to make things work smoothly.
 ENV LANG en_US.UTF-8
 
-# Install requirements for 64-bit only.
-RUN echo "exclude=*.i386 *.i686" >> /etc/yum.conf && \
-    yum update -y && \
+# Install basic requirements.
+RUN yum update -y && \
     yum install -y \
                    bzip2 \
                    gcc-c++ \
