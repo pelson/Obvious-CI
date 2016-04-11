@@ -2,34 +2,51 @@ FROM centos:6
 
 MAINTAINER Phil Elson <pelson.pub@gmail.com>
 
-RUN yum install -y \
+
+# Set an encoding to make things work smoothly.
+ENV LANG en_US.UTF-8
+
+# Install basic requirements.
+RUN yum update -y && \
+    yum install -y \
                    bzip2 \
                    gcc-c++ \
                    git \
                    make \
                    patch \
                    tar \
-                   wget \
                    which \
                    libXext \
                    libXrender \
                    libSM \
-                   libX11-devel
+                   libX11-devel && \
+    yum clean all
 
-RUN wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh --no-verbose && \
+# Download and install tini for zombie reaping.
+RUN curl -s -L -O https://github.com/krallin/tini/releases/download/v0.9.0/tini && \
+    openssl md5 tini | grep 596b898785d2f169ec969445087c14d6 && \
+    chmod +x tini && \
+    mv tini /usr/local/bin
+
+# Install the latest Miniconda with Python 3 and update everything.
+RUN curl -s -L -O https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh && \
     bash Miniconda3-latest-Linux-x86_64.sh -b -p /opt/conda && rm Miniconda*.sh && \
     export PATH=/opt/conda/bin:$PATH && \
     conda config --set show_channel_urls True && \
-    conda update --all --yes && conda clean -t -p
+    conda update --all --yes && conda clean -tipsy
 
-RUN export PATH=/opt/conda/bin:$PATH && \
-    conda install --yes -c pelson/channel/development obvious-ci && \
+# Add conda and friends to the path.
+ENV PATH /opt/conda/bin:$PATH
+
+# Install Obvious-CI.
+RUN conda install --yes -c pelson/channel/development obvious-ci && \
     obvci_install_conda_build_tools.py
 
 # udunits2.
 # libtool texinfo
 # RUN yum install -y expat-devel
 
-ENV PATH /opt/conda/bin:$PATH
-
-ENV LANG en_US.UTF-8
+# Ensure that all containers start with tini and the user selected process.
+# Provide a default command (`bash`), which will start if the user doesn't specify one.
+ENTRYPOINT [ "/usr/local/bin/tini", "--" ]
+CMD [ "/bin/bash" ]
