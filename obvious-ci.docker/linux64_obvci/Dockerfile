@@ -44,6 +44,7 @@ RUN export PATH="/opt/conda/bin:${PATH}" && \
 # libtool texinfo
 # RUN yum install -y expat-devel
 
+COPY entrypoint_source /opt/docker/bin/entrypoint_source
 COPY entrypoint /opt/docker/bin/entrypoint
 
 # Ensure that all containers start with tini and the user selected process.
