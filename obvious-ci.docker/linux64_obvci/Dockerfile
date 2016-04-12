@@ -35,18 +35,19 @@ RUN curl -s -L -O https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x8
     conda config --set show_channel_urls True && \
     conda update --all --yes && conda clean -tipsy
 
-# Add conda and friends to the path.
-ENV PATH /opt/conda/bin:$PATH
-
 # Install Obvious-CI.
-RUN conda install --yes -c pelson/channel/development obvious-ci && \
+RUN export PATH="/opt/conda/bin:${PATH}" && \
+    conda install --yes -c pelson/channel/development obvious-ci && \
     obvci_install_conda_build_tools.py
 
 # udunits2.
 # libtool texinfo
 # RUN yum install -y expat-devel
 
+COPY entrypoint_source /opt/docker/bin/entrypoint_source
+COPY entrypoint /opt/docker/bin/entrypoint
+
 # Ensure that all containers start with tini and the user selected process.
 # Provide a default command (`bash`), which will start if the user doesn't specify one.
-ENTRYPOINT [ "/usr/local/bin/tini", "--" ]
+ENTRYPOINT [ "/usr/local/bin/tini", "--", "/opt/docker/bin/entrypoint" ]
 CMD [ "/bin/bash" ]
