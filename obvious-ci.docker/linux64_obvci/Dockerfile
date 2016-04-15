@@ -19,7 +19,8 @@ RUN yum update -y && \
                    libXext \
                    libXrender \
                    libSM \
-                   libX11-devel && \
+                   libX11-devel \
+                   mesa-libGL-devel && \
     yum clean all
 
 # Download and install tini for zombie reaping.
