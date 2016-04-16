@@ -16,9 +16,9 @@ RUN yum update -y && \
                    patch \
                    tar \
                    which \
-                   libXext \
-                   libXrender \
-                   libSM \
+                   libXext-devel \
+                   libXrender-devel \
+                   libSM-devel \
                    libX11-devel \
                    mesa-libGL-devel && \
     yum clean all
