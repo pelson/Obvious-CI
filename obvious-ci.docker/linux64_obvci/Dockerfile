@@ -23,6 +23,19 @@ RUN yum update -y && \
                    mesa-libGL-devel && \
     yum clean all
 
+# Install devtoolset 2.
+RUN yum update -y && \
+    yum install -y \
+                   centos-release-scl \
+                   yum-utils && \
+    yum-config-manager --add-repo http://people.centos.org/tru/devtools-2/devtools-2.repo && \
+    yum update -y && \
+    yum install -y \
+                   devtoolset-2-binutils \
+                   devtoolset-2-gcc \
+                   devtoolset-2-gcc-c++ && \
+    yum clean all
+
 # Download and install tini for zombie reaping.
 RUN curl -s -L -O https://github.com/krallin/tini/releases/download/v0.9.0/tini && \
     openssl md5 tini | grep 596b898785d2f169ec969445087c14d6 && \
