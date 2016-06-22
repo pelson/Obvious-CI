@@ -1,7 +1,0 @@
-#!/bin/bash
-
-# Source everything that needs to be.
-. /opt/docker/bin/entrypoint_source
-
-# Run whatever the user wants.
-exec "$@"
