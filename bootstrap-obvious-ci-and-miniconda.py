@@ -19,7 +19,7 @@ try:
 except ImportError:
     from urllib import urlretrieve
 
-MINICONDA_URL_TEMPLATE = ('http://repo.continuum.io/miniconda/Miniconda{major_py_version}-'
+MINICONDA_URL_TEMPLATE = ('https://repo.continuum.io/miniconda/Miniconda{major_py_version}-'
                           '{miniconda_version}-{OS}-{arch}.{ext}')
 
 
